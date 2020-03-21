@@ -42,6 +42,10 @@ func NewCalc() Calc {
 		"*": new(widget.Button),
 		".": new(widget.Button),
 		"=": new(widget.Button),
+		"c": new(widget.Button),
+		")": new(widget.Button),
+		"(": new(widget.Button),
+		"←": new(widget.Button),
 	}
 	return Calc{
 		Buttons: buttons,
@@ -53,14 +57,36 @@ func (c *Calc) Button(gtx *layout.Context, b string) func() {
 	return func() {
 		layout.UniformInset(unit.Dp(16)).Layout(gtx, func() {
 			for c.Buttons[b].Clicked(gtx) {
-				if b != "=" {
-					c.Calculation = c.Calculation + b
-				} else {
+				switch b {
+				case "=":
 					cc, _ := gval.Evaluate(c.Calculation, nil)
 					c.Calculation = fmt.Sprint(cc.(float64))
+				case "c":
+					c.Calculation = ""
+				case "←":
+					if last := len(c.Calculation) - 1; last >= 0 {
+						c.Calculation = c.Calculation[:last]
+					}
+				default:
+					c.Calculation = c.Calculation + b
 				}
 			}
 			btn := c.Theme.Button(b)
+			btn.Background = helpers.HexARGB("ff888888")
+			switch b {
+			case "=":
+				btn.Background = helpers.HexARGB("ff30cf30")
+			case "c":
+				btn.Background = helpers.HexARGB("ffcf3030")
+			case "←":
+				btn.Background = helpers.HexARGB("ffcfcf30")
+			case "(", ")":
+				btn.Background = helpers.HexARGB("ffcf30cf")
+			case "/", "*", "-", "+":
+				btn.Background = helpers.HexARGB("ff3030cf")
+			default:
+				btn.Background = helpers.HexARGB("ff30cfcf")
+			}
 			btn.Layout(gtx, c.Buttons[b])
 		})
 	}
@@ -82,34 +108,14 @@ func main() {
 					flexChild(gtx, 0.2, "ffcfcfcf", func() {
 						layout.E.Layout(gtx,
 							func() {
-								calcApp.Theme.H1(calcApp.Calculation).Layout(gtx)
+								calcApp.Theme.H3(calcApp.Calculation).Layout(gtx)
 							})
 					}),
 					flexChild(gtx, 0.8, "ff303030", flex(gtx, layout.Horizontal,
-						flexChild(gtx, 0.25, "ff303030", flex(gtx, layout.Vertical,
-							flexChild(gtx, 0.25, "ff303030", calcApp.Button(gtx, "7")),
-							flexChild(gtx, 0.25, "ff303030", calcApp.Button(gtx, "4")),
-							flexChild(gtx, 0.25, "ff303030", calcApp.Button(gtx, "1")),
-							flexChild(gtx, 0.25, "ff303030", calcApp.Button(gtx, "0")),
-						)),
-						flexChild(gtx, 0.25, "ff303030", flex(gtx, layout.Vertical,
-							flexChild(gtx, 0.25, "ff303030", calcApp.Button(gtx, "8")),
-							flexChild(gtx, 0.25, "ff303030", calcApp.Button(gtx, "5")),
-							flexChild(gtx, 0.25, "ff303030", calcApp.Button(gtx, "2")),
-							flexChild(gtx, 0.25, "ff303030", calcApp.Button(gtx, ".")),
-						)),
-						flexChild(gtx, 0.25, "ff303030", flex(gtx, layout.Vertical,
-							flexChild(gtx, 0.25, "ff303030", calcApp.Button(gtx, "9")),
-							flexChild(gtx, 0.25, "ff303030", calcApp.Button(gtx, "6")),
-							flexChild(gtx, 0.25, "ff303030", calcApp.Button(gtx, "3")),
-							flexChild(gtx, 0.25, "ff303030", calcApp.Button(gtx, "=")),
-						)),
-						flexChild(gtx, 0.25, "ff303030", flex(gtx, layout.Vertical,
-							flexChild(gtx, 0.25, "ff303030", calcApp.Button(gtx, "/")),
-							flexChild(gtx, 0.25, "ff303030", calcApp.Button(gtx, "*")),
-							flexChild(gtx, 0.25, "ff303030", calcApp.Button(gtx, "-")),
-							flexChild(gtx, 0.25, "ff303030", calcApp.Button(gtx, "+")),
-						)),
+						calcApp.column(gtx, "(", "7", "4", "1", "0"),
+						calcApp.column(gtx, ")", "8", "5", "2", "."),
+						calcApp.column(gtx, "c", "9", "6", "3", "="),
+						calcApp.column(gtx, "←", "/", "*", "-", "+"),
 					)),
 				)()
 				e.Frame(gtx.Ops)
@@ -117,6 +123,16 @@ func main() {
 		}
 	}()
 	app.Main()
+}
+
+func (c *Calc) column(gtx *layout.Context, ba, bb, bc, bd, be string) layout.FlexChild {
+	return flexChild(gtx, 0.25, "ff303030", flex(gtx, layout.Vertical,
+		flexChild(gtx, 0.2, "ff303030", c.Button(gtx, ba)),
+		flexChild(gtx, 0.2, "ff303030", c.Button(gtx, bb)),
+		flexChild(gtx, 0.2, "ff303030", c.Button(gtx, bc)),
+		flexChild(gtx, 0.2, "ff303030", c.Button(gtx, bd)),
+		flexChild(gtx, 0.2, "ff303030", c.Button(gtx, be)),
+	))
 }
 
 func flex(gtx *layout.Context, axis layout.Axis, content ...layout.FlexChild) func() {
@@ -138,7 +154,6 @@ func flexChild(gtx *layout.Context, size float32, bg string, content func()) lay
 func drawRectangle(gtx *layout.Context, w, h int, color color.RGBA, borderRadius [4]float32, inset unit.Value) {
 	in := layout.UniformInset(inset)
 	in.Layout(gtx, func() {
-		//cs := gtx.Constraints
 		square := f32.Rectangle{
 			Max: f32.Point{
 				X: float32(w),
@@ -146,7 +161,6 @@ func drawRectangle(gtx *layout.Context, w, h int, color color.RGBA, borderRadius
 			},
 		}
 		paint.ColorOp{Color: color}.Add(gtx.Ops)
-
 		clip.Rect{Rect: square,
 			NE: borderRadius[0], NW: borderRadius[1], SE: borderRadius[2], SW: borderRadius[3]}.Op(gtx.Ops).Add(gtx.Ops) // HLdraw
 		paint.PaintOp{Rect: square}.Add(gtx.Ops)

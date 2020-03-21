@@ -97,7 +97,7 @@ func main() {
 	calcApp := NewCalc()
 	go func() {
 		w := app.NewWindow(
-			app.Size(unit.Dp(400), unit.Dp(800)),
+			app.Size(unit.Dp(500), unit.Dp(800)),
 			app.Title("ParallelCoin"),
 		)
 		gtx := layout.NewContext(w.Queue())

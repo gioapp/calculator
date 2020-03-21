@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"gioui.org/app"
 	"gioui.org/f32"
 	"gioui.org/font/gofont"
@@ -9,15 +10,65 @@ import (
 	"gioui.org/op/clip"
 	"gioui.org/op/paint"
 	"gioui.org/unit"
-	"github.com/gioapp/calculator/calc"
+	"gioui.org/widget"
+	"gioui.org/widget/material"
+	"github.com/PaesslerAG/gval"
 	"github.com/p9c/learngio/helpers"
 	"image"
 	"image/color"
 )
 
+type Calc struct {
+	Buttons     map[string]*widget.Button
+	Theme       *material.Theme
+	Calculation string
+}
+
+func NewCalc() Calc {
+	buttons := map[string]*widget.Button{
+		"0": new(widget.Button),
+		"1": new(widget.Button),
+		"2": new(widget.Button),
+		"3": new(widget.Button),
+		"4": new(widget.Button),
+		"5": new(widget.Button),
+		"6": new(widget.Button),
+		"7": new(widget.Button),
+		"8": new(widget.Button),
+		"9": new(widget.Button),
+		"+": new(widget.Button),
+		"-": new(widget.Button),
+		"/": new(widget.Button),
+		"*": new(widget.Button),
+		".": new(widget.Button),
+		"=": new(widget.Button),
+	}
+	return Calc{
+		Buttons: buttons,
+		Theme:   material.NewTheme(),
+	}
+}
+
+func (c *Calc) Button(gtx *layout.Context, b string) func() {
+	return func() {
+		layout.UniformInset(unit.Dp(16)).Layout(gtx, func() {
+			for c.Buttons[b].Clicked(gtx) {
+				if b != "=" {
+					c.Calculation = c.Calculation + b
+				} else {
+					cc, _ := gval.Evaluate(c.Calculation, nil)
+					c.Calculation = fmt.Sprint(cc.(float64))
+				}
+			}
+			btn := c.Theme.Button(b)
+			btn.Layout(gtx, c.Buttons[b])
+		})
+	}
+}
+
 func main() {
 	gofont.Register()
-	calcApp := calc.NewCalc()
+	calcApp := NewCalc()
 	go func() {
 		w := app.NewWindow(
 			app.Size(unit.Dp(400), unit.Dp(800)),
@@ -27,7 +78,6 @@ func main() {
 		for e := range w.Events() {
 			if e, ok := e.(system.FrameEvent); ok {
 				gtx.Reset(e.Config, e.Size)
-
 				flex(gtx, layout.Vertical,
 					flexChild(gtx, 0.2, "ffcfcfcf", func() {
 						layout.E.Layout(gtx,
@@ -36,29 +86,29 @@ func main() {
 							})
 					}),
 					flexChild(gtx, 0.8, "ff303030", flex(gtx, layout.Horizontal,
-						flexChild(gtx, 0.25, "ff3030cf", flex(gtx, layout.Vertical,
-							flexChild(gtx, 0.25, "ff3030cf", calcApp.Button(gtx, "7")),
-							flexChild(gtx, 0.25, "ff3030cf", calcApp.Button(gtx, "4")),
-							flexChild(gtx, 0.25, "ff3030cf", calcApp.Button(gtx, "1")),
-							flexChild(gtx, 0.25, "ff3030cf", calcApp.Button(gtx, "0")),
+						flexChild(gtx, 0.25, "ff303030", flex(gtx, layout.Vertical,
+							flexChild(gtx, 0.25, "ff303030", calcApp.Button(gtx, "7")),
+							flexChild(gtx, 0.25, "ff303030", calcApp.Button(gtx, "4")),
+							flexChild(gtx, 0.25, "ff303030", calcApp.Button(gtx, "1")),
+							flexChild(gtx, 0.25, "ff303030", calcApp.Button(gtx, "0")),
 						)),
-						flexChild(gtx, 0.25, "ff3030cf", flex(gtx, layout.Vertical,
-							flexChild(gtx, 0.25, "ff3030cf", calcApp.Button(gtx, "8")),
-							flexChild(gtx, 0.25, "ff3030cf", calcApp.Button(gtx, "5")),
-							flexChild(gtx, 0.25, "ff3030cf", calcApp.Button(gtx, "2")),
-							flexChild(gtx, 0.25, "ff3030cf", calcApp.Button(gtx, ".")),
+						flexChild(gtx, 0.25, "ff303030", flex(gtx, layout.Vertical,
+							flexChild(gtx, 0.25, "ff303030", calcApp.Button(gtx, "8")),
+							flexChild(gtx, 0.25, "ff303030", calcApp.Button(gtx, "5")),
+							flexChild(gtx, 0.25, "ff303030", calcApp.Button(gtx, "2")),
+							flexChild(gtx, 0.25, "ff303030", calcApp.Button(gtx, ".")),
 						)),
-						flexChild(gtx, 0.25, "ff3030cf", flex(gtx, layout.Vertical,
-							flexChild(gtx, 0.25, "ff3030cf", calcApp.Button(gtx, "9")),
-							flexChild(gtx, 0.25, "ff3030cf", calcApp.Button(gtx, "6")),
-							flexChild(gtx, 0.25, "ff3030cf", calcApp.Button(gtx, "3")),
-							flexChild(gtx, 0.25, "ff3030cf", calcApp.Button(gtx, "=")),
+						flexChild(gtx, 0.25, "ff303030", flex(gtx, layout.Vertical,
+							flexChild(gtx, 0.25, "ff303030", calcApp.Button(gtx, "9")),
+							flexChild(gtx, 0.25, "ff303030", calcApp.Button(gtx, "6")),
+							flexChild(gtx, 0.25, "ff303030", calcApp.Button(gtx, "3")),
+							flexChild(gtx, 0.25, "ff303030", calcApp.Button(gtx, "=")),
 						)),
-						flexChild(gtx, 0.25, "ff3030cf", flex(gtx, layout.Vertical,
-							flexChild(gtx, 0.25, "ff3030cf", calcApp.Button(gtx, "/")),
-							flexChild(gtx, 0.25, "ff3030cf", calcApp.Button(gtx, "*")),
-							flexChild(gtx, 0.25, "ff3030cf", calcApp.Button(gtx, "-")),
-							flexChild(gtx, 0.25, "ff3030cf", calcApp.Button(gtx, "+")),
+						flexChild(gtx, 0.25, "ff303030", flex(gtx, layout.Vertical,
+							flexChild(gtx, 0.25, "ff303030", calcApp.Button(gtx, "/")),
+							flexChild(gtx, 0.25, "ff303030", calcApp.Button(gtx, "*")),
+							flexChild(gtx, 0.25, "ff303030", calcApp.Button(gtx, "-")),
+							flexChild(gtx, 0.25, "ff303030", calcApp.Button(gtx, "+")),
 						)),
 					)),
 				)()

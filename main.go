@@ -123,14 +123,7 @@ func main() {
 								})
 							})
 						},
-						func(gtx C) D {
-							return lyt.Format(gtx, "hflexa(middle,f(0.2,_),f(0.2,_),f(0.2,_),f(0.2,_))",
-								calcApp.column("(", "7", "4", "1", "0"),
-								calcApp.column(")", "8", "5", "2", "."),
-								calcApp.column("c", "9", "6", "3", "+"),
-								calcApp.column("←", "/", "*", "-", "="),
-							)
-						},
+						calcApp.keys("(", "7", "4", "1", "0", ")", "8", "5", "2", ".", "c", "9", "6", "3", "+", "←", "/", "*", "-", "="),
 					)
 					e.Frame(gtx.Ops)
 				}
@@ -149,6 +142,17 @@ func (c *Calc) column(ba, bb, bc, bd, be string) func(gtx C) D {
 			c.Button(bc),
 			c.Button(bd),
 			c.Button(be),
+		)
+	}
+}
+
+func (c *Calc) keys(aa, ab, ac, ad, ae, ba, bb, bc, bd, be, ca, cb, cc, cd, ce, da, db, dc, dd, de string) func(gtx C) D {
+	return func(gtx C) D {
+		return lyt.Format(gtx, "hflexa(middle,f(0.2,_),f(0.2,_),f(0.2,_),f(0.2,_))",
+			c.column(aa, ab, ac, ad, ae),
+			c.column(ba, bb, bc, bd, be),
+			c.column(ca, cb, cc, cd, ce),
+			c.column(da, db, dc, dd, de),
 		)
 	}
 }
